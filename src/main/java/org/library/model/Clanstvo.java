@@ -12,7 +12,9 @@ import java.time.LocalDate;
 @Entity
 @Table(name = "clanstvo")
 @Data
-@EqualsAndHashCode
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @IdClass(Clanstvo.ClanstvoId.class)
 public class Clanstvo {
 

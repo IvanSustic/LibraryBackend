@@ -20,10 +20,11 @@ import java.time.LocalDate;
 @Builder
 public class RezervacijaDTO {
     private Integer idRezervacija;
-    private String korisnikEmail;
-    private Integer idKnjiga;
-    private String nazivKnjiznice;
     private Integer idKnjiznica;
+    private Integer idKnjiga;
+    private Integer idKorisnik;
+    private String korisnikEmail;
+    private String nazivKnjiznice;
     private String nazivKnjige;
     private LocalDate datumRezervacije;
     private LocalDate krajRezervacije;

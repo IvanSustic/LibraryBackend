@@ -10,6 +10,8 @@ import org.library.model.Autor;
 import org.library.model.TipKnjige;
 import org.library.model.Zanr;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.LocalDate;
 import java.util.Set;
 
@@ -30,6 +32,7 @@ public class KnjigaDto {
     private Zanr zanr;
 
     private TipKnjige tipKnjige;
+    private BigDecimal cijena;
 
     private Set<Autor> autori;
 }

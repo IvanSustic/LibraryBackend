@@ -3,10 +3,9 @@ package org.library.controller;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.library.dto.AuthRequest;
-import org.library.dto.AuthResponse;
-import org.library.dto.KorisnikDto;
+import org.library.dto.*;
 import org.library.model.Korisnik;
+import org.library.service.EmailService;
 import org.library.service.KorisnikService;
 import org.library.service.ZaposlenikService;
 import org.library.utils.JwtUtil;
@@ -18,12 +17,15 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.sql.SQLException;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/auth")
@@ -40,6 +42,8 @@ public class AuthController {
 
     private final PasswordEncoder passwordEncoder;
 
+    private final EmailService emailService;
+
 
     @PostMapping("/login/user")
     public ResponseEntity<?> login(@RequestBody AuthRequest authRequest, HttpServletResponse response) {
@@ -54,6 +58,7 @@ public class AuthController {
         UserDetails userDetails = korisnikService.findByEmail(authRequest.getEmail()).get();
         String accessToken = jwtUtil.generateAccessToken(userDetails);
         String refreshToken = jwtUtil.generateRefreshToken(userDetails);
+        korisnikService.saveRefreshToken(refreshToken,LocalDate.now().plusWeeks(1),authRequest.getEmail());
         ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
                 .httpOnly(true)
                 .secure(true)
@@ -72,7 +77,7 @@ public class AuthController {
                 korisnikService.saveKorisnik(request);
                 return ResponseEntity.ok().build();
             } catch (Exception e) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Registration failed");
+                return ResponseEntity.status(500).body(e.getMessage());
             }
     }
 
@@ -83,7 +88,7 @@ public class AuthController {
         try {
             String username = jwtUtil.extractUsername(refreshToken);
             UserDetails userDetails = korisnikService.findByEmail(username).get();
-            if (!jwtUtil.isTokenExpired(refreshToken)) {
+            if (korisnikService.checkRefreshToken(refreshToken)) {
                 String newAccessToken = jwtUtil.generateAccessToken(userDetails);
                 return ResponseEntity.ok(Map.of("accessToken", newAccessToken));
             } else {
@@ -107,6 +112,7 @@ public class AuthController {
         UserDetails userDetails = zaposlenikService.findByEmail(authRequest.getEmail()).get();
         String accessToken = jwtUtil.generateAccessToken(userDetails);
         String refreshToken = jwtUtil.generateRefreshToken(userDetails);
+        zaposlenikService.saveRefreshToken(refreshToken,LocalDate.now().plusWeeks(1),authRequest.getEmail());
         ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
                 .httpOnly(true)
                 .secure(true)
@@ -126,7 +132,7 @@ public class AuthController {
         try {
             String username = jwtUtil.extractUsername(refreshToken);
             UserDetails userDetails = zaposlenikService.findByEmail(username).get();
-            if (!jwtUtil.isTokenExpired(refreshToken)) {
+            if (zaposlenikService.checkRefreshToken(refreshToken)) {
                 String newAccessToken = jwtUtil.generateAccessToken(userDetails);
                 return ResponseEntity.ok(Map.of("accessToken", newAccessToken));
             } else {
@@ -146,10 +152,40 @@ public class AuthController {
                 .sameSite("Strict")
                 .build();
 
-
         response.setHeader(HttpHeaders.SET_COOKIE, deleteCookie.toString());
 
         return ResponseEntity.ok().body(Map.of("message", "Logged out successfully"));
     }
+    @PostMapping("/request-reset")
+    public ResponseEntity<?> requestReset(@RequestBody EmailDto email) {
+        Optional<Korisnik> user = korisnikService.findByEmail(email.getEmail());
+        if (user.isPresent()) {
+            String token = jwtUtil.generateAccessToken(user.get());
+            String resetLink = "http://localhost:4200/reset-password/" + token;
+            emailService.sendResetLink(user.get().getEmail(), resetLink);
 
+            return ResponseEntity.ok().build();
+        }
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Email nije nađen");
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody ResetLozinkaRequest request) {
+
+        if (request.getToken() == null ) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Nevažeči token");
+        }
+        Optional<Korisnik> user = korisnikService.findByEmail(jwtUtil.extractUsername(request.getToken()));
+        if (user.isEmpty() ) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Nepostojeći korisnik");
+        }
+        user.get().setLozinka(passwordEncoder.encode(request.getNewLozinka()));
+        try {
+            korisnikService.saveKorisnik(user.get());
+        } catch (SQLException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+
+        return ResponseEntity.ok().build();
+    }
 }

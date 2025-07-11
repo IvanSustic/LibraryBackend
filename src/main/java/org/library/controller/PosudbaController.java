@@ -3,6 +3,7 @@ package org.library.controller;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.library.dto.PosudbaDto;
+import org.library.dto.RacunDto;
 import org.library.dto.RezervacijaDTO;
 import org.library.model.Posudba;
 import org.library.model.Rezervacija;
@@ -39,25 +40,33 @@ public class PosudbaController {
         return posudbaService.getPosudbeForZaposlenik(jwtUtil.extractUsername(token));
     }
 
-    @PostMapping("/rezerviraj")
-    public ResponseEntity<?> rezerviraj(@RequestBody PosudbaDto request, HttpServletRequest tokenRequest) {
-        String header = tokenRequest.getHeader("Authorization");
-        String token = header.substring(7);
-        request.setKorisnikEmail(jwtUtil.extractUsername(token));
-        System.out.println(request);
-        try {
-            PosudbaDto rezervacija = posudbaService.savePosudba(request);
-            return ResponseEntity.ok().body(rezervacija);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("Nemoguče rezervirati knjigu");
+    @PostMapping("/posudi")
+    public ResponseEntity<String> posudi(@RequestBody PosudbaDto request) {
+        try{
+            this.posudbaService.savePosudba(request);
+            return ResponseEntity.ok().build();
+        } catch (Exception e){
+            return ResponseEntity.status(500).body(e.getMessage());
         }
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<String> delete(@PathVariable("id") Integer id){
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<?> delete(@PathVariable("id") Integer id, HttpServletRequest request){
+        String header = request.getHeader("Authorization");
+        String token = header.substring(7);
         try{
-            this.posudbaService.deletePosudba(id);
-            return ResponseEntity.ok().build();
+            return ResponseEntity.ok().body(this.posudbaService.deletePosudba(id, jwtUtil.extractUsername(token)));
+        } catch (Exception e){
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @DeleteMapping("/ostecena/{id}")
+    public ResponseEntity<?> deleteOstecena(@PathVariable("id") Integer id, HttpServletRequest request){
+        String header = request.getHeader("Authorization");
+        String token = header.substring(7);
+        try{
+            return ResponseEntity.ok().body(this.posudbaService.ostecenaPosudba(id, jwtUtil.extractUsername(token)));
         } catch (Exception e){
             return ResponseEntity.notFound().build();
         }

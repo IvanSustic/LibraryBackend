@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.io.File;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -39,6 +40,9 @@ public class Knjiga {
 
     @Column(name = "slika")
     private String slika;
+
+    @Column(name = "cijena", precision = 10, scale = 2)
+    private BigDecimal cijena;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "idZanr", nullable = false)

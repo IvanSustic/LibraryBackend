@@ -1,13 +1,19 @@
 package org.library.service;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.library.dto.PosudbaDto;
 import org.library.dto.RezervacijaDTO;
+import org.library.model.Clanstvo;
 import org.library.model.Knjiga;
 import org.library.model.Knjiznica;
 import org.library.model.Rezervacija;
 import org.library.repository.*;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,9 +22,11 @@ import java.util.Optional;
 public class RezervacijaServiceImpl implements RezervacijaService {
 
     private final RezervacijaRepository rezervacijaRepository;
+    private final PosudbaRepository posudbaRepository;
     private final KorisnikRepository korisnikRepository;
     private final KnjiznicaRepository knjiznicaRepository;
-
+    private final ClanstvoRepository clanstvoRepository;
+    private final PosudbaService posudbaService;
     @Override
     public List<Rezervacija> getAllRezervacije() {
         return rezervacijaRepository.findAll();
@@ -31,18 +39,45 @@ public class RezervacijaServiceImpl implements RezervacijaService {
 
     @Override
     public RezervacijaDTO saveRezervacija(RezervacijaDTO rezervacija) throws IllegalAccessException {
+        Optional<Clanstvo> clanstvo =
+                clanstvoRepository.findByKnjiznicaIdKnjiznicaAndKorisnikEmail(
+                        rezervacija.getIdKnjiznica(),rezervacija.getKorisnikEmail());
+        if (clanstvo.isPresent()){
+            if (clanstvo.get().getKrajUclanjenja().isBefore(LocalDate.now())){
+                throw new IllegalAccessException("Korisnikovo članstvo je isteklo.");
+            }
 
         if (getRezervacijeForKorisnik(rezervacija.getKorisnikEmail()).size() >= 3
         || (knjiznicaRepository.findKolicina(rezervacija.getIdKnjiga(), rezervacija.getIdKnjiznica())<=0)) {
-            throw new IllegalAccessException("Too many reservations already.");
+            throw new IllegalAccessException("Previše rezervacija.");
         } else{
-            if (knjiznicaRepository.updateKolicina(rezervacija.getIdKnjiga(),rezervacija.getIdKnjiznica())==1){
+            if (knjiznicaRepository.subtractKolicina(rezervacija.getIdKnjiga(),rezervacija.getIdKnjiznica())==1){
                 return mapToDTO(rezervacijaRepository.save(mapToRezervacija(rezervacija)));
             } else{
-                throw new IllegalAccessException("No books available");
+                throw new IllegalAccessException("Nema trenutno dostupnih knjiga");
             }
 
         }
+        } else {
+            throw new IllegalAccessException("Korisnik nema članstva.");
+        }
+    }
+
+    @Override
+    @Transactional(rollbackOn = IllegalAccessException.class)
+    public PosudbaDto saveRezerviranaPosudba(RezervacijaDTO rezervacijaDTO) throws IllegalAccessException {
+        deleteRezervacija(rezervacijaDTO.getIdRezervacija());
+        return posudbaService.savePosudba( PosudbaDto.builder()
+                .idKnjiznica(rezervacijaDTO.getIdKnjiznica())
+                .korisnikEmail(rezervacijaDTO.getKorisnikEmail())
+                .nazivKnjiznice(rezervacijaDTO.getNazivKnjiznice())
+                .nazivKnjige(rezervacijaDTO.getNazivKnjige())
+                .krajPosudbe(LocalDate.now().plusWeeks(2))
+                .datumPosudbe(LocalDate.now())
+                .idKnjiga(rezervacijaDTO.getIdKnjiga())
+                .idKorisnik(rezervacijaDTO.getIdKorisnik())
+                .build());
+
     }
 
     @Override
@@ -58,6 +93,11 @@ public class RezervacijaServiceImpl implements RezervacijaService {
     }
 
 
+
+    @Override
+    public List<RezervacijaDTO> getRezervacijeForZaposlenik(String email) {
+        return rezervacijaRepository.findPosudbeByZaposlenikEmail(email).stream().map(this::objectToDto).toList();
+    }
 
     @Override
     public List<RezervacijaDTO> getRezervacijeForKorisnik(String email) {
@@ -84,7 +124,28 @@ public class RezervacijaServiceImpl implements RezervacijaService {
                 .nazivKnjige(rezervacija.getKnjiga().getNaslov())
                 .nazivKnjiznice(rezervacija.getKnjiznica().getNaziv())
                 .idRezervacija(rezervacija.getIdRezervacija())
+                .idKorisnik(rezervacija.getKorisnik().getIdKorisnik())
                 .build();
+    }
+
+    private RezervacijaDTO objectToDto(Object[] posudba){
+        return RezervacijaDTO.builder()
+                .idRezervacija(((Number) posudba[0]).intValue())
+                .idKorisnik(((Number) posudba[1]).intValue())
+                .idKnjiznica(((Number) posudba[2]).intValue())
+                .idKnjiga(((Number) posudba[3]).intValue())
+                .datumRezervacije(convertToLocalDateViaMilisecond((Date) posudba[4]))
+                .krajRezervacije(convertToLocalDateViaMilisecond((Date) posudba[5]))
+                .nazivKnjige((String) posudba[6])
+                .nazivKnjiznice((String) posudba[7])
+                .korisnikEmail((String) posudba[8])
+                .build();
+    }
+
+    public LocalDate convertToLocalDateViaMilisecond(Date dateToConvert) {
+        return Instant.ofEpochMilli(dateToConvert.getTime())
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate();
     }
 
 }

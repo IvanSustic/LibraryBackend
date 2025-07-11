@@ -36,9 +36,24 @@ public class SecurityConfiguration {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**","/api/knjiznica/**","/api/knjige/**").permitAll()
-                        .requestMatchers("/admin/**","/api/korisnik/knjige","api/rezervacije/**", "api/posudba/forUser").hasRole("USER")
-                        .requestMatchers("/user/**", "api/posudba/forUser").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers("/auth/**","/api/knjiznica/all","/api/knjiznica/{id}","/api/knjige/all",
+                                "/api/knjige/{id}", "/api/tipKnjige/all", "/api/mjesto/all",
+                                "/api/autor/all", "/api/zanr/all", "/uploads/images/**").permitAll()
+                        .requestMatchers("/api/korisnik/knjige","api/rezervacije/forUser", "api/posudba/forUser"
+                                    , "api/clanstvo/forUser", "api/rezervacije/rezerviraj").hasAuthority("ROLE_USER")
+                        .requestMatchers("/api/posudba/forZaposlenik","/api/rezervacije/forZaposlenik", "api/clanstvo/forZaposlenik", "api/clanstvo/dodaj",
+                                "api/clanstvo/", "api/knjiznica/forZaposlenik" , "api/korisnik/emails",
+                                "api/posudba/posudi", "api/posudba/ostecena/{id}", "api/mjesto/delete/{id}",
+                                "api/rezervacije/posudiRezerviranu" , "api/zaposlenici/knjige").hasAnyAuthority("Voditelj knjižnice", "Admin", "Knjižničar")
+                        .requestMatchers("/api/autor/dodaj", "/api/autor/delete/{id}", "api/knjige/allVoditelj", "api/knjige/dodaj"
+                        ,"api/knjige/delete/{id}","api/knjiznica/updateRaspolaganje", "api/knjiznica/addRaspolaganje",
+                                "api/knjiznica/deleteRaspolaganje","api/slika/**", "api/racun/all",
+                                "api/tipKnjige/dodaj","api/tipKnjige/delete/{id}",
+                                "api/zanr/dodaj","api/zanr/delete/{id}", "api/zaposlenici/zaposleniciForKnjiznicar",
+                                "api/zaposlenici/register/zaposlenik").hasAnyAuthority("Voditelj knjižnice", "Admin")
+                        .requestMatchers("api/knjiznica/delete/{id}", "api/knjiznica/dodaj", "api/korisnik/register/korisnik",
+                                "api/korisnik/disableKorisnik", "api/mjesto/dodaj", "api/mjesto/delete/{id}" ,"api/korisnik/all"
+                        ,"api/zaposlenici/all","api/zaposlenici/disableZaposlenik").hasAuthority( "Admin")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
@@ -61,7 +76,7 @@ public class SecurityConfiguration {
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOriginPatterns(List.of("http://localhost:4200"));
-        configuration.setAllowedMethods(List.of("GET", "POST","DELETE" , "OPTIONS"));
+        configuration.setAllowedMethods(List.of("GET","PUT", "POST","DELETE" , "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
 

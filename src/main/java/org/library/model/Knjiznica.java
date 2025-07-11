@@ -11,7 +11,7 @@ import java.util.Set;
 @Entity
 @Table(name = "knjiznica")
 @Data
-@EqualsAndHashCode
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

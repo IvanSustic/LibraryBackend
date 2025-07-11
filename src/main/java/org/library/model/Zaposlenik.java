@@ -15,6 +15,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -23,6 +24,9 @@ import java.util.Set;
 @Table(name = "zaposlenik")
 @Data
 @EqualsAndHashCode
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class Zaposlenik implements UserDetails {
 
     @Id
@@ -39,6 +43,12 @@ public class Zaposlenik implements UserDetails {
 
     @Column(name = "email", nullable = false, unique = true)
     private String email;
+
+    @Column(name = "refreshToken")
+    private String refreshToken;
+
+    @Column(name = "refreshTokenDatum")
+    private LocalDate refreshTokenDatum;
 
     @Column(name = "lozinka", nullable = false)
     private String lozinka;

@@ -15,6 +15,9 @@ import java.math.BigDecimal;
 @Table(name = "racun")
 @Data
 @EqualsAndHashCode
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class Racun {
 
     @Id

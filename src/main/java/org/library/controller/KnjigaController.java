@@ -27,6 +27,11 @@ public class KnjigaController {
         return knjigaService.getAllKnjige().stream().toList();
     }
 
+    @GetMapping("/allVoditelj")
+    public List<KnjigaDto> getAllVoditelj() {
+        return knjigaService.getAllKnjige().stream().toList();
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<KnjigaDto> getById(@PathVariable Integer id) {
         return knjigaService.getKnjigaById(id)
@@ -36,12 +41,12 @@ public class KnjigaController {
 
 
 
-    @PostMapping
+    @PostMapping("/dodaj")
     public Knjiga create(@RequestBody KnjigaDto dto) {
         return knjigaService.saveKnjiga(dto);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/dodaj/{id}")
     public ResponseEntity<Knjiga> update(@PathVariable Integer id, @RequestBody KnjigaDto dto) {
         return knjigaService.getKnjigaById(id).map(existing -> {
             KnjigaDto updated = dto;
@@ -50,9 +55,13 @@ public class KnjigaController {
         }).orElse(ResponseEntity.notFound().build());
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Integer id) {
-        knjigaService.deleteKnjiga(id);
-        return ResponseEntity.noContent().build();
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<String> delete(@PathVariable Integer id) {
+        try{
+            knjigaService.deleteKnjiga(id);
+            return ResponseEntity.ok().build();
+        } catch (Exception e){
+            return ResponseEntity.status(500).body(e.getMessage());
+        }
     }
 }

@@ -10,6 +10,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -52,6 +53,12 @@ public class Korisnik implements UserDetails {
 
     @OneToMany(mappedBy = "korisnik")
     private Set<Racun> racuni;
+
+    @Column(name = "refreshToken")
+    private String refreshToken;
+
+    @Column(name = "refreshTokenDatum")
+    private LocalDate refreshTokenDatum;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

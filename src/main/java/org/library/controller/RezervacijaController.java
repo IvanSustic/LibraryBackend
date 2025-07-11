@@ -2,11 +2,9 @@ package org.library.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.library.dto.DozvoljenaKnjigaDto;
-import org.library.dto.KnjigaDto;
-import org.library.dto.KorisnikDto;
-import org.library.dto.RezervacijaDTO;
+import org.library.dto.*;
 import org.library.model.Rezervacija;
+import org.library.service.PosudbaService;
 import org.library.service.RezervacijaService;
 import org.library.service.ZaposlenikService;
 import org.library.utils.JwtUtil;
@@ -23,7 +21,7 @@ import java.util.Optional;
 public class RezervacijaController {
     private final JwtUtil jwtUtil;
     private final RezervacijaService rezervacijaService;
-
+    private final PosudbaService posudbaService;
     @GetMapping("/forUser")
     public List<RezervacijaDTO> getForUser(HttpServletRequest request) {
         String header = request.getHeader("Authorization");
@@ -32,22 +30,40 @@ public class RezervacijaController {
         return rezervacijaService.getRezervacijeForKorisnik(jwtUtil.extractUsername(token));
     }
 
+    @GetMapping("/forZaposlenik")
+    public List<RezervacijaDTO> getForZaposlenik(HttpServletRequest request) {
+        String header = request.getHeader("Authorization");
+        String token = header.substring(7);
+
+        return rezervacijaService.getRezervacijeForZaposlenik(jwtUtil.extractUsername(token));
+    }
+
 
     @PostMapping("/rezerviraj")
     public ResponseEntity<?> rezerviraj(@RequestBody RezervacijaDTO request, HttpServletRequest tokenRequest) {
         String header = tokenRequest.getHeader("Authorization");
         String token = header.substring(7);
         request.setKorisnikEmail(jwtUtil.extractUsername(token));
-        System.out.println(request);
+
         try {
             RezervacijaDTO rezervacija = rezervacijaService.saveRezervacija(request);
             return ResponseEntity.ok().body(rezervacija);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("Nemoguče rezervirati knjigu");
+            return ResponseEntity.status(500).body(e.getMessage());
         }
     }
 
-    @DeleteMapping("/{id}")
+    @PostMapping("/posudiRezerviranu")
+    public ResponseEntity<String> posudiRezerviranu(@RequestBody RezervacijaDTO request) {
+        try{
+            this.rezervacijaService.saveRezerviranaPosudba(request);
+            return ResponseEntity.ok().build();
+        } catch (Exception e){
+            return ResponseEntity.status(500).body(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/delete/{id}")
     public ResponseEntity<String> delete(@PathVariable("id") Integer id){
         try{
             this.rezervacijaService.deleteRezervacija(id);

@@ -5,6 +5,8 @@ import org.library.model.TipKnjige;
 import org.library.repository.TipKnjigeRepository;
 import org.springframework.stereotype.Service;
 
+import java.sql.SQLException;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,7 +32,14 @@ public class TipKnjigeServiceImpl implements TipKnjigeService {
     }
 
     @Override
-    public void deleteTipKnjige(Integer id) {
-        tipKnjigeRepository.deleteById(id);
+    public void deleteTipKnjige(Integer id) throws SQLException {
+        if (tipKnjigeRepository.findById(id).isEmpty()){
+            throw new SQLException("Tip knjige ne postoji.");
+        }
+        try {
+            tipKnjigeRepository.deleteById(id);
+        } catch (Exception e){
+            throw new SQLIntegrityConstraintViolationException("Tip knjige je povezan sa knjigama i ne može biti obrisan.");
+        }
     }
 }

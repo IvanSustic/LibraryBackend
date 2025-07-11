@@ -1,5 +1,6 @@
 package org.library.service;
 
+import org.library.dto.PosudbaDto;
 import org.library.dto.RezervacijaDTO;
 import org.library.model.Rezervacija;
 
@@ -10,8 +11,10 @@ public interface RezervacijaService {
     List<Rezervacija> getAllRezervacije();
     Optional<Rezervacija> getRezervacijaById(Integer id);
     RezervacijaDTO saveRezervacija(RezervacijaDTO rezervacija) throws IllegalAccessException;
-    void deleteRezervacija(Integer id) throws IllegalAccessException;
 
+    PosudbaDto saveRezerviranaPosudba(RezervacijaDTO rezervacija) throws IllegalAccessException;
+    void deleteRezervacija(Integer id) throws IllegalAccessException;
+    List<RezervacijaDTO> getRezervacijeForZaposlenik(String email);
 
     List<RezervacijaDTO> getRezervacijeForKorisnik(String email);
 }

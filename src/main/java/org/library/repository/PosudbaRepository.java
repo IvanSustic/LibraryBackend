@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface PosudbaRepository extends JpaRepository<Posudba, Integer> {
     List<Posudba> findByKorisnikEmail(String email);
@@ -23,4 +24,6 @@ public interface PosudbaRepository extends JpaRepository<Posudba, Integer> {
     WHERE zaposlenik.email = :email
     """, nativeQuery = true)
     List<Object[]> findPosudbeByZaposlenikEmail(@Param("email") String email);
+
+    Optional<Posudba> findPosudbaByKnjigaIdKnjigaAndKnjiznicaIdKnjiznica(Integer idKnjiga, Integer idKnjiznica);
 }

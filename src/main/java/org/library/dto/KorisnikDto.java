@@ -10,8 +10,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class KorisnikDto {
+    private Integer idKorisnik;
     private String email;
     private String lozinka;
     private String ime;
     private String prezime;
+    private Boolean iskljucen = false;
 }

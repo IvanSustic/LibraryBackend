@@ -1,11 +1,14 @@
 package org.library.repository;
 
+import jakarta.transaction.Transactional;
 import org.library.dto.KnjigaDto;
 import org.library.model.Korisnik;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,4 +35,19 @@ public interface KorisnikRepository extends JpaRepository<Korisnik, Integer> {
       AND kik.kolicina > 0
     """, nativeQuery = true)
     List<Object[]> findKnjigeByKorisik(@Param("email") String email);
+
+    Optional<Korisnik> findByRefreshToken(String refreshToken);
+
+    @Modifying
+    @Transactional
+    @Query(value = """
+    UPDATE korisnik
+    SET refreshToken=:refreshToken,
+    refreshTokenDatum=:refreshTokenDatum
+    WHERE email= :email
+    """, nativeQuery = true)
+    void updateRefreshToken(@Param("refreshToken") String refreshToken,
+                            @Param("refreshTokenDatum") LocalDate refreshTokenDatum,
+                            @Param("email") String email);
+
 }

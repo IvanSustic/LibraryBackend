@@ -10,6 +10,9 @@ import java.util.Set;
 @Table(name = "tip_racuna")
 @Data
 @EqualsAndHashCode
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class TipRacuna {
 
     @Id

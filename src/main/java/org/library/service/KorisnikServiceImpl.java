@@ -5,11 +5,12 @@ import lombok.RequiredArgsConstructor;
 import org.library.dto.DozvoljenaKnjigaDto;
 import org.library.dto.KorisnikDto;
 import org.library.model.*;
-import org.library.repository.AutorRepository;
 import org.library.repository.KnjigaRepository;
 import org.library.repository.KorisnikRepository;
 import org.springframework.stereotype.Service;
 
+import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -24,8 +25,8 @@ public class KorisnikServiceImpl implements KorisnikService {
     private final KnjigaRepository knjigaRepository;
 
     @Override
-    public List<Korisnik> getAllKorisnici() {
-        return korisnikRepository.findAll();
+    public List<KorisnikDto> getAllKorisnici() {
+        return korisnikRepository.findAll().stream().map(this::mapToDto).toList();
     }
 
     @Override
@@ -34,8 +35,16 @@ public class KorisnikServiceImpl implements KorisnikService {
     }
 
     @Override
-    public Korisnik saveKorisnik(KorisnikDto korisnik) {
+    public Korisnik saveKorisnik(KorisnikDto korisnik) throws SQLException {
+        if (korisnikRepository.findByEmail(korisnik.getEmail()).isPresent()){
+            throw new SQLException("Korisnik već postoji");
+        }
         return korisnikRepository.save(korisnikDtoToKorisnik(korisnik));
+    }
+
+    @Override
+    public Korisnik saveKorisnik(Korisnik korisnik) {
+        return korisnikRepository.save(korisnik);
     }
 
     @Override
@@ -48,11 +57,68 @@ public class KorisnikServiceImpl implements KorisnikService {
         return korisnikRepository.findByEmail(email);
     }
 
+
+    @Override
+    public boolean checkRefreshToken(String refreshToken) {
+        Optional<Korisnik> korisnik = korisnikRepository.findByRefreshToken(refreshToken);
+        return korisnik.map(value -> value.getRefreshTokenDatum().isAfter(LocalDate.now())).orElse(false);
+
+    }
+
+    @Override
+    public void saveRefreshToken(String refreshToken, LocalDate refreshTokenDatum, String email) {
+    korisnikRepository.updateRefreshToken(refreshToken,refreshTokenDatum,email);
+    }
+
+
+    @Override
+    public Korisnik saveKorisnikAdmin(Korisnik korisnik) throws SQLException {
+        Optional<Korisnik> oldZaposlenik = korisnikRepository.findByEmail(korisnik.getEmail());
+        if (oldZaposlenik.isPresent()){
+            if (korisnik.getIdKorisnik()== null){
+                throw new SQLException("Zaposlenik s ovim emailom već postoji");
+            }
+            if (korisnik.getIdKorisnik().equals(oldZaposlenik.get().getIdKorisnik())){
+                if (korisnik.getLozinka()==null){
+                    korisnik.setLozinka(oldZaposlenik.get().getLozinka());
+                }
+                return korisnikRepository.save(korisnik);
+            }else throw new SQLException("Došlo je do pogreške kod editiranja zaposlenika");
+        } else {
+            return korisnikRepository.save(korisnik);
+        }
+    }
+
+    @Override
+    public Korisnik disableKorisnik(Korisnik korisnik) throws SQLException {
+
+        if (korisnikRepository.findByEmail(korisnik.getEmail()).isPresent()){
+            korisnik.setLozinka("iskljucen");
+            korisnik.setRefreshToken(null);
+            korisnik.setRefreshTokenDatum(null);
+            return korisnikRepository.save(korisnik);
+        } else {
+            throw new SQLException("Zaposlenik ne postoji.");
+        }
+    }
+
     Korisnik korisnikDtoToKorisnik(KorisnikDto korisnikDto){
         return Korisnik.builder().email(korisnikDto.getEmail())
                 .prezime(korisnikDto.getPrezime())
                 .ime(korisnikDto.getIme())
                 .lozinka(korisnikDto.getLozinka()).build();
+    }
+
+    KorisnikDto mapToDto(Korisnik korisnik){
+
+        return KorisnikDto.builder()
+                .idKorisnik(korisnik.getIdKorisnik())
+                .email(korisnik.getEmail())
+                .ime(korisnik.getIme())
+                .prezime(korisnik.getPrezime())
+                .iskljucen(korisnik.getLozinka().equals("iskljucen"))
+                .build();
+
     }
 
     public List<DozvoljenaKnjigaDto> findKnjigeByKorisnik(String email) {
