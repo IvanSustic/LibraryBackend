@@ -56,7 +56,7 @@ public class SlikaService {
     public void deleteFile(String file,String folder) throws IOException {
         URL url = URI.create(file).toURL();
         String path = url.getPath();
-        Files.delete(Path.of(fileStorageLocation+"\\"+folder+"\\"+ Paths.get(path).getFileName().toString()));
+        Files.delete(Path.of(fileStorageLocation+"/"+folder+"/"+ Paths.get(path).getFileName().toString()));
     }
 
 }

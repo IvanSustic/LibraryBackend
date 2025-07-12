@@ -25,5 +25,5 @@ public interface PosudbaRepository extends JpaRepository<Posudba, Integer> {
     """, nativeQuery = true)
     List<Object[]> findPosudbeByZaposlenikEmail(@Param("email") String email);
 
-    Optional<Posudba> findPosudbaByKnjigaIdKnjigaAndKnjiznicaIdKnjiznica(Integer idKnjiga, Integer idKnjiznica);
+    List<Posudba> findAllByKnjigaIdKnjigaAndKnjiznicaIdKnjiznica(Integer idKnjiga, Integer idKnjiznica);
 }

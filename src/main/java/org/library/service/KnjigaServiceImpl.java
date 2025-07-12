@@ -35,12 +35,12 @@ public class KnjigaServiceImpl implements KnjigaService {
     @Override
     public void deleteKnjiga(Integer id) throws SQLException {
         if (knjigaRepository.findById(id).isEmpty()){
-            throw new SQLException("Tip knjige ne postoji.");
+            throw new SQLException("Knjiga ne postoji.");
         }
         try {
             knjigaRepository.deleteById(id);
         } catch (Exception e){
-            throw new SQLIntegrityConstraintViolationException("Tip knjige je povezan sa knjigama i ne može biti obrisan.");
+            throw new SQLIntegrityConstraintViolationException("Knjiga je povezana s knjižnicom i ne može biti obrisana.");
         }
     }
 

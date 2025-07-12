@@ -89,8 +89,8 @@ public class KnjiznicaServiceImpl implements KnjiznicaService {
 
     @Override
     public int deleteRaspolaganje(RaspolaganjeDto raspolaganjeDto) throws SQLException {
-        if (posudbaRepository.findPosudbaByKnjigaIdKnjigaAndKnjiznicaIdKnjiznica(raspolaganjeDto.getIdKnjiga(),raspolaganjeDto.getIdKnjiznica()).isPresent()
-        || rezervacijaRepository.findRezervacijaByKnjigaIdKnjigaAndKnjiznicaIdKnjiznica(raspolaganjeDto.getIdKnjiga(),raspolaganjeDto.getIdKnjiznica()).isPresent()){
+        if (!posudbaRepository.findAllByKnjigaIdKnjigaAndKnjiznicaIdKnjiznica(raspolaganjeDto.getIdKnjiga(),raspolaganjeDto.getIdKnjiznica()).isEmpty()
+        || !rezervacijaRepository.findAllByKnjigaIdKnjigaAndKnjiznicaIdKnjiznica(raspolaganjeDto.getIdKnjiga(),raspolaganjeDto.getIdKnjiznica()).isEmpty()){
             throw new SQLException("Nemoguće obrisati raspolaganje jer trenutno postoje knjige koje su rezervirane ili posuđene.");
         }
         return knjiznicaRepository.deleteRaspolaganje(raspolaganjeDto.getIdKnjiga(),raspolaganjeDto.getIdKnjiznica());

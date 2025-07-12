@@ -25,7 +25,7 @@ public interface RezervacijaRepository extends JpaRepository<Rezervacija, Intege
     """, nativeQuery = true)
     List<Object[]> findPosudbeByZaposlenikEmail(@Param("email") String email);
 
-    Optional<Rezervacija> findRezervacijaByKnjigaIdKnjigaAndKnjiznicaIdKnjiznica(Integer idKnjiga, Integer idKnjiznica);
+    List<Rezervacija> findAllByKnjigaIdKnjigaAndKnjiznicaIdKnjiznica(Integer idKnjiga, Integer idKnjiznica);
 
     @Modifying
     @Transactional

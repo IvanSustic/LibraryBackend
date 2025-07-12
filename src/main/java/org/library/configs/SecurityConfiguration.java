@@ -50,10 +50,10 @@ public class SecurityConfiguration {
                                 "api/knjiznica/deleteRaspolaganje","api/slika/**", "api/racun/all",
                                 "api/tipKnjige/dodaj","api/tipKnjige/delete/{id}",
                                 "api/zanr/dodaj","api/zanr/delete/{id}", "api/zaposlenici/zaposleniciForKnjiznicar",
-                                "api/zaposlenici/register/zaposlenik").hasAnyAuthority("Voditelj knjižnice", "Admin")
+                                "api/zaposlenici/register/zaposlenik","api/zaposlenici/disableZaposlenik").hasAnyAuthority("Voditelj knjižnice", "Admin")
                         .requestMatchers("api/knjiznica/delete/{id}", "api/knjiznica/dodaj", "api/korisnik/register/korisnik",
                                 "api/korisnik/disableKorisnik", "api/mjesto/dodaj", "api/mjesto/delete/{id}" ,"api/korisnik/all"
-                        ,"api/zaposlenici/all","api/zaposlenici/disableZaposlenik").hasAuthority( "Admin")
+                        ,"api/zaposlenici/all").hasAuthority( "Admin")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
